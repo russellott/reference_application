@@ -158,7 +158,7 @@ function formatJSONWithFailedHighlight(obj, indent = 0) {
 
     if (typeof obj !== 'object') {
         if (typeof obj === 'string') {
-            return `"${obj}"`;
+            return '"' + obj + '"';
         }
         return String(obj);
     }
@@ -171,7 +171,7 @@ function formatJSONWithFailedHighlight(obj, indent = 0) {
             const isFailed = hasFailedStatus(item);
 
             if (isFailed) {
-                result += `${nextIndentStr}<span class="failed-assessment-item">`;
+                result += nextIndentStr + '<span class="failed-assessment-item">';
             } else {
                 result += nextIndentStr;
             }
@@ -195,7 +195,7 @@ function formatJSONWithFailedHighlight(obj, indent = 0) {
 
     let result = '{\n';
     keys.forEach((key, index) => {
-        result += `${nextIndentStr}"${key}": `;
+        result += nextIndentStr + '"' + key + '": ';
         result += formatJSONWithFailedHighlight(obj[key], indent + 1);
         if (index < keys.length - 1) result += ',';
         result += '\n';
