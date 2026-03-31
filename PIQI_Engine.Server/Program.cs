@@ -63,7 +63,10 @@ public partial class Program
         var logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).Enrich.FromLogContext().CreateLogger();
         loggerFactory.AddSerilog(logger);
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseRouting();
 
         app.UseCors("AllowAll");
