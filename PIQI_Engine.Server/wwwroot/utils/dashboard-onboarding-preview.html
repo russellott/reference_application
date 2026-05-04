@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Preview</title>
+  <style>
+    :root {
+      --bg: #eef4f8;
+      --surface: #ffffff;
+      --surface-soft: #f8fbff;
+      --ink: #0f172a;
+      --muted: #5f738a;
+      --line: #d6e3ef;
+      --line-strong: #bfd3e6;
+      --brand: #1d4ed8;
+      --brand-soft: #dbeafe;
+      --teal: #0f766e;
+      --teal-soft: #ccfbf1;
+      --pass: #15803d;
+      --pass-soft: #dcfce7;
+      --warn: #b45309;
+      --warn-soft: #fef3c7;
+      --fail: #b91c1c;
+      --fail-soft: #fee2e2;
+      --violet: #7c3aed;
+      --violet-soft: #ede9fe;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Trebuchet MS", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 28%),
+        radial-gradient(circle at left 20%, rgba(20, 184, 166, 0.10), transparent 24%),
+        linear-gradient(180deg, #edf5fb 0%, #f9fcfe 100%);
+    }
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+      display: grid;
+      gap: 18px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 18px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,251,255,0.98) 100%);
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .hero-card {
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.14), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f4f9ff 100%);
+    }
+    .eyebrow {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--teal);
+      font-weight: 800;
+    }
+    h1, h2, h3, h4, p { margin: 0; }
+    h1 { font-size: 2rem; letter-spacing: -0.03em; margin-top: 8px; }
+    .sub {
+      color: var(--muted);
+      margin-top: 10px;
+      max-width: 72ch;
+      line-height: 1.55;
+    }
+    .hero-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .hero-pill {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.86);
+    }
+    .hero-pill span {
+      display: block;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .hero-pill strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1rem;
+      line-height: 1.35;
+    }
+    .starter-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .starter-item {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: #fff;
+    }
+    .starter-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%);
+      color: white;
+      font-weight: 800;
+    }
+    .starter-item small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .kpi {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow: var(--shadow-soft);
+    }
+    .kpi::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 5px;
+    }
+    .kpi:nth-child(1)::before { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+    .kpi:nth-child(2)::before { background: linear-gradient(90deg, #0f766e, #2dd4bf); }
+    .kpi:nth-child(3)::before { background: linear-gradient(90deg, #15803d, #4ade80); }
+    .kpi:nth-child(4)::before { background: linear-gradient(90deg, #b91c1c, #fb7185); }
+    .kpi:nth-child(5)::before { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+    .kpi:nth-child(6)::before { background: linear-gradient(90deg, #ca8a04, #facc15); }
+    .kpi-label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .kpi-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-top: 8px;
+      line-height: 1;
+    }
+    .kpi-help {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 18px;
+    }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .analytics-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: #fff;
+    }
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .chart-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .mode-chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #f8fbff;
+      color: #334155;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .line-chart {
+      height: 170px;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      background:
+        linear-gradient(to top, rgba(59,130,246,0.10) 0%, rgba(59,130,246,0.04) 45%, transparent 100%),
+        repeating-linear-gradient(to top, #eef4fb 0, #eef4fb 1px, transparent 1px, transparent 34px),
+        linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .line-path {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .donut-wrap {
+      display: grid;
+      place-items: center;
+      gap: 10px;
+      padding: 10px 0 4px;
+    }
+    .donut {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: conic-gradient(#15803d 0% 33%, #b91c1c 33% 66%, #ca8a04 66% 100%);
+      position: relative;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+    }
+    .donut::after {
+      content: "";
+      position: absolute;
+      inset: 24px;
+      background: #fff;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+    }
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 1;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .donut-legend {
+      display: grid;
+      gap: 6px;
+      width: 100%;
+      font-size: 0.83rem;
+      color: #334155;
+    }
+    .donut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6px 9px;
+      background: #fff;
+    }
+    .source-note {
+      margin-top: 10px;
+      border: 1px solid #cfe1f5;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
+      color: #334155;
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+    .class-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .class-table {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .class-table table {
+      font-size: 0.84rem;
+    }
+    .class-row {
+      cursor: pointer;
+      transition: background 140ms ease;
+    }
+    .class-row:hover {
+      background: #f8fbff;
+    }
+    .class-row.active {
+      background: #e8f1ff;
+    }
+    .class-detail {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+    .class-detail h4 {
+      font-size: 0.96rem;
+      letter-spacing: -0.01em;
+    }
+    .class-detail .detail-sub {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .detail-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(80px, 1fr));
+      gap: 8px;
+    }
+    .detail-pill {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 8px;
+      background: #f8fbff;
+      font-size: 0.77rem;
+      color: #475569;
+    }
+    .detail-pill strong {
+      display: block;
+      font-size: 0.95rem;
+      color: #0f172a;
+      margin-top: 4px;
+    }
+    .section-title {
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .section-sub {
+      color: var(--muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .story-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .story-card {
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+    .story-card.pass { background: linear-gradient(180deg, #f6fff9 0%, #e8faef 100%); border-color: #9ae6b4; }
+    .story-card.fail { background: linear-gradient(180deg, #fff7f7 0%, #ffecec 100%); border-color: #f7b4b4; }
+    .story-card.warn { background: linear-gradient(180deg, #fffdf5 0%, #fff4d9 100%); border-color: #f6d365; }
+    .story-card span {
+      display: block;
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .story-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.8rem;
+    }
+    .story-card small {
+      display: block;
+      margin-top: 8px;
+      color: #475569;
+      line-height: 1.45;
+      font-size: 0.84rem;
+    }
+    .batch-panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .batch-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: linear-gradient(90deg, #eff6ff 0%, #f8fbff 100%);
+      border-bottom: 1px solid var(--line);
+    }
+    .progress-shell {
+      height: 12px;
+      border-radius: 999px;
+      background: #dbeafe;
+      overflow: hidden;
+      margin: 14px 16px 10px;
+      border: 1px solid #bfdbfe;
+    }
+    .progress-bar {
+      width: 74%;
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb 0%, #14b8a6 100%);
+    }
+    .batch-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+    }
+    .mini span {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .mini strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 1.1rem;
+    }
+    .guide-list, .action-list {
+      display: grid;
+      gap: 10px;
+    }
+    .guide-item, .action-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: #fff;
+    }
+    .guide-item strong, .action-item strong { display: block; }
+    .guide-item small, .action-item small {
+      display: block;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 0.82rem;
+      color: #334155;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot.pass { background: var(--pass); }
+    .dot.warn { background: var(--warn); }
+    .dot.fail { background: var(--fail); }
+    .dot.info { background: var(--brand); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+    th, td {
+      padding: 11px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    th {
+      background: #f7fbff;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #475569;
+    }
+    .rank { font-weight: 800; color: var(--brand); }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+    .status-chip.pass { background: var(--pass-soft); color: var(--pass); }
+    .status-chip.warn { background: var(--warn-soft); color: var(--warn); }
+    .status-chip.fail { background: var(--fail-soft); color: var(--fail); }
+    .footnote {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.5;
+    }
+    @media (max-width: 1100px) {
+      .hero, .main-grid { grid-template-columns: 1fr; }
+      .summary-strip { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .hero-grid, .story-grid, .batch-metrics { grid-template-columns: 1fr; }
+      .analytics-grid,
+      .class-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <article class="card hero-card">
+        <div class="eyebrow">Preview Only</div>
+        <h1>Data Quality Dashboard for First-Time Users</h1>
+        <p class="sub">This concept keeps the richer reference-application dashboard, but reorganizes it around the same plain-language logic the original PIQI Engine UI uses: what happened to the messages, what failed, and where to investigate next.</p>
+        <div class="hero-grid">
+          <div class="hero-pill">
+            <span>Start Here</span>
+            <strong>Did my messages process and how healthy are they?</strong>
+          </div>
+          <div class="hero-pill">
+            <span>Then Check</span>
+            <strong>Which source or data class is causing the most risk?</strong>
+          </div>
+          <div class="hero-pill">
+            <span>Then Drill In</span>
+            <strong>Which failed checks should I fix first?</strong>
+          </div>
+        </div>
+      </article>
+      <aside class="card">
+        <div class="eyebrow">How To Read This</div>
+        <div class="starter-list">
+          <div class="starter-item">
+            <div class="starter-num">1</div>
+            <div>
+              <strong>Messages</strong>
+              <small>Use the top cards to confirm how many messages were scored and whether the batch is broadly passing or failing.</small>
+            </div>
+          </div>
+          <div class="starter-item">
+            <div class="starter-num">2</div>
+            <div>
+              <strong>Checks</strong>
+              <small>The middle section explains how many field-level checks passed, failed, or were skipped. This mirrors the detailed PIQI Engine audit view.</small>
+            </div>
+          </div>
+          <div class="starter-item">
+            <div class="starter-num">3</div>
+            <div>
+              <strong>Action</strong>
+              <small>The right rail tells a new user what needs attention now, what looks healthy, and where to click next.</small>
+            </div>
+          </div>
+        </div>
+        <div class="source-note"><strong>Input Coverage:</strong> This dashboard combines outcomes from both single JSON submissions and batch uploads. The same quality-over-time, donut, and class drill-down views update regardless of how data arrives.</div>
+      </aside>
+    </section>
+
+    <section class="summary-strip">
+      <article class="kpi">
+        <div class="kpi-label">Total Messages</div>
+        <div class="kpi-value">19</div>
+        <div class="kpi-help">How many messages were included in the current batch or active session.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Average Quality</div>
+        <div class="kpi-value">58%</div>
+        <div class="kpi-help">Overall PIQI score across processed messages.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Clean Messages</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-help">Messages with no critical issues and a passing score.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Critical Messages</div>
+        <div class="kpi-value">14</div>
+        <div class="kpi-help">Messages that need investigation first.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Data Sources</div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-help">Distinct providers or feeds contributing data.</div>
+      </article>
+      <article class="kpi">
+        <div class="kpi-label">Latest Batch</div>
+        <div class="kpi-value">In Progress</div>
+        <div class="kpi-help">Current processing state so a new user knows whether results are final.</div>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <div style="display:grid; gap:18px;">
+        <article class="card">
+          <h2 class="section-title">Current Batch Story</h2>
+          <p class="section-sub">This replaces “just a wall of metrics” with a simple narrative: how many messages were processed, how many failed, and what the check-level pattern says about the batch.</p>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <div class="chart-head">
+                <div class="chart-title">Message Quality Over Time</div>
+                <div class="mode-chip">All Submissions</div>
+              </div>
+              <div class="line-chart">
+                <svg class="line-path" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Quality over time">
+                  <polyline fill="none" stroke="#1d4ed8" stroke-width="2.6" points="0,70 12,68 24,64 36,66 48,58 60,62 72,44 84,51 100,38"></polyline>
+                  <polyline fill="none" stroke="#0f766e" stroke-width="2" opacity="0.6" points="0,74 12,71 24,69 36,72 48,63 60,66 72,52 84,57 100,43"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="analytics-card">
+              <div class="chart-head">
+                <div class="chart-title">Pass / Fail / Skip Donut</div>
+                <div class="mode-chip">Message Mode</div>
+              </div>
+              <div class="donut-wrap">
+                <div class="donut">
+                  <div class="donut-center">19</div>
+                </div>
+                <div class="donut-legend">
+                  <div class="donut-row"><span><span class="dot pass"></span> Passed</span><strong>6</strong></div>
+                  <div class="donut-row"><span><span class="dot fail"></span> Failed</span><strong>10</strong></div>
+                  <div class="donut-row"><span><span class="dot warn"></span> Skipped</span><strong>3</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="story-grid">
+            <div class="story-card fail">
+              <span>Batch Risk</span>
+              <strong>High</strong>
+              <small>14 of 19 processed messages are currently failing, so the batch likely has systemic field-population issues.</small>
+            </div>
+            <div class="story-card warn">
+              <span>Most Common Problem</span>
+              <strong>Missing Required Fields</strong>
+              <small>Failures are concentrated around required lab-result attributes such as performed date and result status.</small>
+            </div>
+            <div class="story-card pass">
+              <span>What Is Working</span>
+              <strong>Code Systems</strong>
+              <small>Unit and test-code checks are passing, which means mapping and terminology are mostly correct.</small>
+            </div>
+          </div>
+          <div class="batch-panel">
+            <div class="batch-panel-head">
+              <div>
+                <h3 style="font-size:1rem;">Latest Batch Health</h3>
+                <p class="footnote">Inspired by the original PIQI Engine result layout: show message outcomes first, then check outcomes.</p>
+              </div>
+              <div class="status-chip warn">Batch Active</div>
+            </div>
+            <div class="progress-shell"><div class="progress-bar"></div></div>
+            <div class="batch-metrics">
+              <div class="mini"><span>Processed</span><strong>14 / 19</strong></div>
+              <div class="mini"><span>Succeeded</span><strong>0</strong></div>
+              <div class="mini"><span>Failed</span><strong>14</strong></div>
+              <div class="mini"><span>Checks</span><strong>28 pass / 28 fail / 28 skip</strong></div>
+            </div>
+          </div>
+
+          <div class="class-grid">
+            <div class="class-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data Class</th>
+                    <th>Pass %</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="class-row active" data-class="Lab Results" data-pass="42" data-failreason="Missing performedDateTime and resultStatus" data-topissue="Required fields unpopulated">
+                    <td>Lab Results</td>
+                    <td>42%</td>
+                    <td><span class="status-chip fail">Failing</span></td>
+                  </tr>
+                  <tr class="class-row" data-class="Medications" data-pass="71" data-failreason="Occasional missing status" data-topissue="Status normalization">
+                    <td>Medications</td>
+                    <td>71%</td>
+                    <td><span class="status-chip warn">Watch</span></td>
+                  </tr>
+                  <tr class="class-row" data-class="Allergies" data-pass="88" data-failreason="Low failure volume" data-topissue="Minor coding mismatches">
+                    <td>Allergies</td>
+                    <td>88%</td>
+                    <td><span class="status-chip pass">Passing</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="class-detail" id="class-detail">
+              <h4>Lab Results</h4>
+              <div class="detail-sub">Clicking a class row opens detail context. This mirrors the existing reference app behavior where class rows are clickable and drill into failed checks.</div>
+              <div class="detail-kpis">
+                <div class="detail-pill">Pass %<strong>42%</strong></div>
+                <div class="detail-pill">Top Issue<strong>Required fields</strong></div>
+                <div class="detail-pill">Priority<strong>High</strong></div>
+              </div>
+              <div class="guide-item" style="margin:0;">
+                <strong>Most common failure</strong>
+                <small id="class-fail-reason">Missing performedDateTime and resultStatus</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">Source Overview With Plain-Language Status</h2>
+          <p class="section-sub">For someone new to the product, this table explains not only scores, but what the score means and where to focus first.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Source</th>
+                <th>Messages</th>
+                <th>Average Score</th>
+                <th>Status</th>
+                <th>Why It Matters</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rank">1</td>
+                <td>ED Troponin Feed A</td>
+                <td>7</td>
+                <td>82%</td>
+                <td><span class="status-chip pass">Healthy</span></td>
+                <td>Most checks pass. Use this as the baseline for comparison.</td>
+              </tr>
+              <tr>
+                <td class="rank">2</td>
+                <td>Lab Feed B</td>
+                <td>5</td>
+                <td>58%</td>
+                <td><span class="status-chip warn">Watch</span></td>
+                <td>Terminology looks fine, but required field population is inconsistent.</td>
+              </tr>
+              <tr>
+                <td class="rank">3</td>
+                <td>POC Device Feed</td>
+                <td>7</td>
+                <td>21%</td>
+                <td><span class="status-chip fail">Needs Attention</span></td>
+                <td>High failure rate. This feed should be the first remediation priority.</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </div>
+
+      <aside style="display:grid; gap:18px;">
+        <article class="card">
+          <h2 class="section-title">Why Messages Are Failing</h2>
+          <p class="section-sub">Borrowed from the original PIQI Engine experience: give people a simple explanation of what the failed checks are telling them.</p>
+          <div class="guide-list">
+            <div class="guide-item">
+              <strong>Performed Date Missing</strong>
+              <small>PIQI expects this field for lab timing context. Missing values reduce trust in the result and drive failures.</small>
+            </div>
+            <div class="guide-item">
+              <strong>Result Status Missing</strong>
+              <small>This is a required operational field. When absent, the dashboard should explain that the result may be clinically incomplete.</small>
+            </div>
+            <div class="guide-item">
+              <strong>Skipped Checks Are Not Always Bad</strong>
+              <small>Some checks are skipped because the incoming value type does not apply. A new user should not confuse “skipped” with “failed.”</small>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-chip"><span class="dot pass"></span> Passed = requirement met</div>
+            <div class="legend-chip"><span class="dot fail"></span> Failed = action needed</div>
+            <div class="legend-chip"><span class="dot warn"></span> Skipped = not applicable or missing context</div>
+            <div class="legend-chip"><span class="dot info"></span> Drill in = view per-attribute detail</div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">Recommended Next Actions</h2>
+          <p class="section-sub">Instead of making a new user interpret everything alone, the dashboard can suggest where to go next.</p>
+          <div class="action-list">
+            <div class="action-item">
+              <strong>1. Review the worst-performing source first</strong>
+              <small>Open the source details page for “POC Device Feed” and confirm whether the same missing fields recur across all messages.</small>
+            </div>
+            <div class="action-item">
+              <strong>2. Drill into failed checks</strong>
+              <small>Filter to failed checks only and focus on required fields before terminology or optional attributes.</small>
+            </div>
+            <div class="action-item">
+              <strong>3. Compare batch vs source trend</strong>
+              <small>Use the trend chart to decide whether this is a one-off bad batch or a persistent feed-quality problem.</small>
+            </div>
+          </div>
+        </article>
+      </aside>
+    </section>
+  </main>
+  <script>
+    (function () {
+      const rows = document.querySelectorAll('.class-row');
+      const detail = document.getElementById('class-detail');
+      if (!rows.length || !detail) return;
+
+      function setDetail(row) {
+        rows.forEach(function (r) { r.classList.remove('active'); });
+        row.classList.add('active');
+
+        const className = row.getAttribute('data-class') || 'Data Class';
+        const pass = row.getAttribute('data-pass') || '-';
+        const reason = row.getAttribute('data-failreason') || '-';
+        const issue = row.getAttribute('data-topissue') || '-';
+        const priority = Number(pass) >= 70 ? 'Medium' : 'High';
+
+        detail.querySelector('h4').textContent = className;
+        detail.querySelector('.detail-kpis').innerHTML =
+          '<div class="detail-pill">Pass %<strong>' + pass + '%</strong></div>' +
+          '<div class="detail-pill">Top Issue<strong>' + issue + '</strong></div>' +
+          '<div class="detail-pill">Priority<strong>' + priority + '</strong></div>';
+        detail.querySelector('#class-fail-reason').textContent = reason;
+      }
+
+      rows.forEach(function (row) {
+        row.addEventListener('click', function () {
+          setDetail(row);
+        });
+      });
+    }());
+  </script>
+</body>
+</html>

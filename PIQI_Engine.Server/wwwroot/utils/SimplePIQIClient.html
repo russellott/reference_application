@@ -5,305 +5,844 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PIQI MessageAudit Submission Client</title>
+    <script>
+        (function () {
+            // Keep one consistent UI across localhost entry points.
+            // Add ?legacy=1 to stay on the old Simple client if needed.
+            if (window.location.search.indexOf('legacy=1') !== -1) return;
+            var target = '/utils/DataQualitySPA.html' + (window.location.search || '') + (window.location.hash || '');
+            window.location.replace(target);
+        })();
+    </script>
     <link rel="stylesheet" href="piqi-client.css">
+    <style>
+        /* ── Design Tokens ─────────────────────────────────────── */
+        :root {
+            --c-primary:       #2563eb;
+            --c-primary-dk:    #1d4ed8;
+            --c-primary-lt:    #dbeafe;
+            --c-success:       #059669;
+            --c-success-lt:    #d1fae5;
+            --c-error:         #dc2626;
+            --c-error-lt:      #fee2e2;
+            --c-warning:       #d97706;
+            --c-warning-lt:    #fef3c7;
+            --c-surface:       #ffffff;
+            --c-bg:            #f1f5f9;
+            --c-border:        #e2e8f0;
+            --c-text:          #1e293b;
+            --c-muted:         #64748b;
+            --radius-sm:       6px;
+            --radius-md:       10px;
+            --radius-lg:       14px;
+            --shadow-sm:       0 1px 3px rgba(0,0,0,.08);
+            --shadow-md:       0 4px 14px rgba(0,0,0,.10);
+            --t:               180ms ease;
+        }
+
+        /* ── Base overrides ─────────────────────────────────────── */
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--c-bg);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 72px; /* room for sticky action bar */
+            color: var(--c-text);
+            max-width: none;
+        }
+
+        /* neutralise shared-CSS container so we can control layout */
+        .container {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        /* ── App header ─────────────────────────────────────────── */
+        .app-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+            color: white;
+            padding: 18px 32px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: var(--shadow-md);
+        }
+        .app-header__icon {
+            width: 42px; height: 42px;
+            background: rgba(255,255,255,.18);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+        }
+        .app-header__title {
+            font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em;
+        }
+        .app-header__sub {
+            font-size: .75rem; opacity: .72; margin-top: 2px;
+        }
+
+        /* ── Step bar ───────────────────────────────────────────── */
+        .step-bar {
+            background: white;
+            border-bottom: 1px solid var(--c-border);
+            padding: 12px 32px;
+            display: flex; align-items: center;
+        }
+        .step-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: .8rem; font-weight: 600;
+            color: var(--c-muted); flex: 0 0 auto;
+        }
+        .step-item.active { color: var(--c-primary); }
+        .step-item.done   { color: var(--c-success); }
+        .step-dot {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: var(--c-border); color: var(--c-muted);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .72rem; font-weight: 700; flex-shrink: 0;
+            transition: var(--t);
+        }
+        .step-item.active .step-dot {
+            background: var(--c-primary); color: white;
+            box-shadow: 0 0 0 4px var(--c-primary-lt);
+        }
+        .step-item.done .step-dot { background: var(--c-success); color: white; }
+        .step-line {
+            flex: 1; height: 2px; background: var(--c-border);
+            margin: 0 8px; min-width: 36px;
+        }
+
+        /* ── Main 2-column grid ─────────────────────────────────── */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            padding: 28px 32px;
+            align-items: start;
+        }
+        @media (max-width: 920px) {
+            .main-content { grid-template-columns: 1fr; padding: 16px; }
+            body { padding-bottom: 90px; }
+        }
+
+        /* ── Card ───────────────────────────────────────────────── */
+        .card {
+            background: var(--c-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--c-border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 22px 13px;
+            border-bottom: 1px solid var(--c-border);
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 12px;
+        }
+        .card-header__title {
+            font-size: .92rem; font-weight: 700;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-header__icon {
+            width: 28px; height: 28px;
+            background: var(--c-primary-lt); color: var(--c-primary);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .card-body { padding: 20px 22px; }
+
+        /* ── Content-type pill toggle ───────────────────────────── */
+        .type-toggle {
+            display: inline-flex;
+            background: var(--c-bg);
+            border-radius: 8px; padding: 3px; gap: 2px;
+            border: 1px solid var(--c-border);
+        }
+        .type-toggle__btn {
+            padding: 6px 16px; font-size: .78rem; font-weight: 600;
+            border: none; background: transparent; cursor: pointer;
+            border-radius: 5px; color: var(--c-muted); transition: var(--t);
+        }
+        .type-toggle__btn.active {
+            background: white; color: var(--c-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .type-toggle__btn:focus {
+            outline: 3px solid rgba(37,99,235,.35); outline-offset: 1px;
+        }
+
+        /* ── JSON textarea ──────────────────────────────────────── */
+        .json-editor-wrap { position: relative; margin-top: 14px; }
+
+        #piqiJsonInput {
+            width: 100%; min-height: 360px;
+            font-family: 'SF Mono','Cascadia Code','Fira Code','Courier New', monospace;
+            font-size: 13px; line-height: 1.65; padding: 16px;
+            border: 2px solid var(--c-border); border-radius: var(--radius-md);
+            resize: vertical; background: #fafbfc; color: var(--c-text);
+            transition: border-color var(--t), box-shadow var(--t);
+            outline: none;
+        }
+        #piqiJsonInput:focus {
+            border-color: var(--c-primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+            background: white;
+        }
+        #piqiJsonInput.json-valid   { border-color: var(--c-success); }
+        #piqiJsonInput.json-invalid { border-color: var(--c-error); }
+
+        .json-status-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 10px 0; font-size: .75rem; color: var(--c-muted);
+        }
+        .json-validity {
+            display: flex; align-items: center; gap: 5px; font-weight: 600;
+        }
+        .json-validity.valid   { color: var(--c-success); }
+        .json-validity.invalid { color: var(--c-error); }
+
+        /* ── FHIR info notice ───────────────────────────────────── */
+        .fhir-notice {
+            display: none; align-items: flex-start; gap: 8px;
+            background: #eff6ff; border: 1.5px solid #bfdbfe;
+            border-radius: var(--radius-sm); padding: 10px 14px;
+            font-size: .78rem; color: #1e40af; margin-bottom: 6px;
+        }
+        .fhir-notice.show { display: flex; }
+
+        /* ── Form controls ──────────────────────────────────────── */
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            font-size: .75rem; font-weight: 700; color: var(--c-muted);
+            text-transform: uppercase; letter-spacing: .04em;
+            margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+        }
+        input[type="text"], input[type="url"], select {
+            border: 1.5px solid var(--c-border); border-radius: var(--radius-sm);
+            font-size: .86rem; padding: 9px 11px;
+            transition: border-color var(--t), box-shadow var(--t);
+            outline: none; background: white; color: var(--c-text); width: 100%;
+        }
+        input[type="text"]:focus, input[type="url"]:focus, select:focus {
+            border-color: var(--c-primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+        }
+        input[readonly] {
+            background: var(--c-bg); color: var(--c-muted);
+            font-family: 'SF Mono','Cascadia Code', monospace; font-size: .78rem;
+        }
+
+        /* ── Session ID row ─────────────────────────────────────── */
+        .session-row { display: flex; align-items: center; gap: 7px; }
+        .session-row input { flex: 1; }
+        .regen-btn {
+            width: 34px; height: 34px; padding: 0; flex-shrink: 0;
+            border: 1.5px solid var(--c-border); background: white;
+            border-radius: var(--radius-sm); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: var(--c-muted); transition: var(--t);
+        }
+        .regen-btn:hover {
+            border-color: var(--c-primary); color: var(--c-primary);
+            background: var(--c-primary-lt);
+        }
+        .regen-btn:focus { outline: 3px solid rgba(37,99,235,.35); outline-offset: 1px; }
+
+        /* ── Auto badge ─────────────────────────────────────────── */
+        .badge-auto {
+            font-size: .65rem; background: var(--c-primary-lt);
+            color: var(--c-primary); padding: 2px 7px; border-radius: 10px;
+            font-weight: 700; letter-spacing: 0;
+        }
+
+        /* ── Collapsible advanced settings ──────────────────────── */
+        .collapsible-trigger {
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer; user-select: none;
+            padding: 10px 0 8px; border-top: 1px solid var(--c-border);
+            margin-top: 6px; color: var(--c-muted);
+            font-size: .8rem; font-weight: 600;
+        }
+        .collapsible-trigger:hover { color: var(--c-primary); }
+        .collapsible-trigger:focus { outline: 3px solid rgba(37,99,235,.35); border-radius: 3px; }
+        .chevron { font-size: 11px; transition: transform var(--t); }
+        .collapsible-trigger[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+        .collapsible-body { display: none; padding-top: 8px; }
+        .collapsible-body.open { display: block; }
+
+        /* ── Hidden legacy button group (kept for piqi-client.js) ─ */
+        .button-group { display: none !important; }
+
+        /* ── Loading indicator ──────────────────────────────────── */
+        #loading {
+            display: none; align-items: center; gap: 9px;
+            color: var(--c-primary); font-size: .84rem; font-weight: 600;
+        }
+        #loading.show { display: flex; }
+        .spinner {
+            width: 17px; height: 17px;
+            border: 2.5px solid var(--c-primary-lt);
+            border-top-color: var(--c-primary);
+            border-radius: 50%; animation: spin .75s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Sticky action bar ──────────────────────────────────── */
+        .action-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: white; border-top: 1px solid var(--c-border);
+            padding: 12px 32px; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,.07); z-index: 200;
+        }
+        @media (max-width: 600px) {
+            .action-bar { padding: 10px 14px; flex-wrap: wrap; }
+        }
+        .action-bar__right { margin-left: auto; }
+
+        /* ── Buttons ────────────────────────────────────────────── */
+        .btn {
+            padding: 10px 22px; font-size: .87rem; font-weight: 600;
+            border: none; border-radius: var(--radius-sm); cursor: pointer;
+            display: inline-flex; align-items: center; gap: 7px;
+            transition: var(--t); white-space: nowrap;
+        }
+        .btn:focus { outline: 3px solid rgba(37,99,235,.4); outline-offset: 2px; }
+
+        .btn-primary {
+            background: var(--c-primary); color: white;
+            box-shadow: 0 2px 8px rgba(37,99,235,.32);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--c-primary-dk);
+            box-shadow: 0 4px 14px rgba(37,99,235,.38);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            background: #94a3b8; box-shadow: none;
+            cursor: not-allowed; transform: none;
+        }
+        .btn-secondary {
+            background: white; color: var(--c-text);
+            border: 1.5px solid var(--c-border);
+        }
+        .btn-secondary:hover {
+            border-color: var(--c-primary); color: var(--c-primary);
+            background: var(--c-primary-lt);
+        }
+        .btn-ghost {
+            background: transparent; color: var(--c-muted);
+            border: 1.5px solid transparent;
+        }
+        .btn-ghost:hover {
+            color: var(--c-error); border-color: #fca5a5; background: var(--c-error-lt);
+        }
+
+        /* ── Preview & Response sections ────────────────────────── */
+        .preview-section {
+            display: none; margin: 0 32px 20px;
+            background: #fffbeb; border: 1.5px solid #fcd34d;
+            border-radius: var(--radius-md); box-shadow: none;
+        }
+        .preview-section.show { display: block; }
+
+        .response-section {
+            display: none; margin: 0 32px 32px;
+        }
+        .response-section.show { display: block; }
+
+        /* Response header styling driven by content via :has() */
+        #responseHeader:not(:empty) {
+            padding: 15px 22px; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            font-weight: 700; font-size: .9rem;
+            border: 1px solid var(--c-border); border-bottom: none;
+        }
+        #responseHeader:has(span.success) {
+            background: var(--c-success-lt); color: var(--c-success);
+            border-color: #6ee7b7;
+        }
+        #responseHeader:has(span.error) {
+            background: var(--c-error-lt); color: var(--c-error);
+            border-color: #fca5a5;
+        }
+
+        .response-body-wrap {
+            background: white; border: 1px solid var(--c-border);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            padding: 22px;
+        }
+
+        /* when no header is shown, round all corners */
+        #responseHeader:empty + .response-body-wrap {
+            border-radius: var(--radius-lg);
+        }
+
+        /* ── Small separator label ──────────────────────────────── */
+        .section-label {
+            font-size: .68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--c-muted);
+            margin: 0 32px 8px; padding-top: 4px;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>PIQI MessageAudit Submission Client</h1>
 
-        <!-- Paste JSON Section -->
-        <div class="paste-section">
-            <h2>📋 Paste JSON Message</h2>
-            <div class="form-group">
-                <label for="inputContentType">Pasted Content Type:</label>
-                <select id="inputContentType" required>
+<!-- ── App Header ──────────────────────────────────────────────── -->
+<header class="app-header">
+    <div class="app-header__icon">🩺</div>
+    <div>
+        <div class="app-header__title">PIQI MessageAudit Submission Client</div>
+        <div class="app-header__sub">Patient Information Quality Index · Clinical Audit Scoring</div>
+    </div>
+</header>
+
+<!-- ── Step Bar ────────────────────────────────────────────────── -->
+<nav class="step-bar" aria-label="Progress steps">
+    <div class="step-item active" id="step1">
+        <div class="step-dot">1</div>
+        <span>Paste Message</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" id="step2">
+        <div class="step-dot">2</div>
+        <span>Configure &amp; Submit</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step-item" id="step3">
+        <div class="step-dot">3</div>
+        <span>Review Results</span>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- ── Two-column layout ───────────────────────────────────── -->
+    <div class="main-content">
+
+        <!-- LEFT: Message Input ──────────────────────────────── -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header__title">
+                    <div class="card-header__icon">📋</div>
+                    Message Input
+                </div>
+                <!-- Pill toggle: backed by hidden <select> for piqi-client.js compatibility -->
+                <div class="type-toggle" role="group" aria-label="Input content type">
+                    <button type="button" class="type-toggle__btn active"
+                        id="togglePIQI" aria-pressed="true"
+                        onclick="setContentType('PIQI')">PIQI JSON</button>
+                    <button type="button" class="type-toggle__btn"
+                        id="toggleFHIR" aria-pressed="false"
+                        onclick="setContentType('FHIR')">FHIR JSON</button>
+                </div>
+                <!-- Hidden select kept for piqi-client.js -->
+                <select id="inputContentType" style="display:none;" required>
                     <option value="PIQI">PIQI JSON</option>
                     <option value="FHIR">FHIR JSON</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="piqiJsonInput">Paste your PIQI-formatted JSON message here:</label>
-                <textarea id="piqiJsonInput" class="json-output"
-                    placeholder="Paste your PIQI or FHIR JSON message here..."></textarea>
+            <div class="card-body">
+                <div class="fhir-notice" id="fhirNotice" role="note">
+                    <span>ℹ️</span>
+                    <span>FHIR JSON will be automatically converted to PIQI format before submission using the FHIR Conversion API configured in Advanced Settings below.</span>
+                </div>
+                <div class="json-editor-wrap">
+                    <textarea id="piqiJsonInput"
+                        placeholder="Paste your PIQI or FHIR JSON message here…"
+                        oninput="onJsonInput(this)"
+                        aria-label="JSON message input"
+                        aria-describedby="jsonValidityDesc"></textarea>
+                    <div class="json-status-bar" id="jsonValidityDesc" aria-live="polite">
+                        <div class="json-validity" id="jsonValidity">
+                            <span id="jsonValidityIcon">○</span>
+                            <span id="jsonValidityText">No content</span>
+                        </div>
+                        <span id="jsonCharCount">0 characters</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <form id="apiForm">
-            <div class="api-url-group">
-                <div class="form-group">
-                    <label for="apiUrl">API Endpoint URL:</label>
-                    <input type="text" id="apiUrl" value="http://localhost:5025/PIQI/ScoreAuditMessage" required>
+        <!-- RIGHT: Configuration form ────────────────────────── -->
+        <form id="apiForm" novalidate>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header__title">
+                        <div class="card-header__icon">⚙️</div>
+                        Configuration
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="fhirConversionApiUrl">FHIR Conversion API URL:</label>
-                    <input type="text" id="fhirConversionApiUrl" value="http://localhost:5001/convertToPiqi" required>
+                <div class="card-body">
+
+                    <div class="form-group">
+                        <label for="piqiModelMnemonic">PIQI Model</label>
+                        <select id="piqiModelMnemonic" required>
+                            <option value="PAT_CLINICAL_V1">PAT_CLINICAL_V1</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="evaluationRubricMnemonic">Evaluation Rubric</label>
+                        <select id="evaluationRubricMnemonic" required>
+                            <option value="USCDI_V3">USCDI_V3</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataProviderID">
+                            Data Provider ID
+                            <span class="badge-auto">auto</span>
+                        </label>
+                        <div class="session-row">
+                            <input type="text" id="dataProviderID" required readonly
+                                title="Auto-generated session ID">
+                            <button type="button" class="regen-btn"
+                                onclick="regenerateSessionIDs()"
+                                title="Generate new session IDs"
+                                aria-label="Regenerate session IDs">↺</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dataSourceID">
+                            Data Source ID
+                            <span class="badge-auto">auto</span>
+                        </label>
+                        <input type="text" id="dataSourceID" required readonly
+                            title="Auto-generated session ID">
+                    </div>
+
+                    <!-- Collapsible Advanced Settings -->
+                    <div class="collapsible-trigger"
+                        id="advancedTrigger"
+                        role="button" tabindex="0"
+                        aria-expanded="false"
+                        aria-controls="advancedBody"
+                        onclick="toggleAdvanced()"
+                        onkeydown="if(event.key==='Enter'||event.key===' ')toggleAdvanced()">
+                        <span>⚙ Advanced Settings</span>
+                        <span class="chevron" aria-hidden="true">▼</span>
+                    </div>
+                    <div class="collapsible-body" id="advancedBody" role="region" aria-label="Advanced settings">
+                        <div class="form-group">
+                            <label for="apiUrl">API Endpoint URL</label>
+                            <input type="url" id="apiUrl"
+                                value="http://localhost:5025/PIQI/ScoreAuditMessage" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fhirConversionApiUrl">FHIR Conversion API URL</label>
+                            <input type="url" id="fhirConversionApiUrl"
+                                value="http://localhost:5001/convertToPiqi" required>
+                        </div>
+                    </div>
+
+                    <!-- Hidden legacy controls: piqi-client.js queries .submit-btn inside form -->
+                    <div class="button-group">
+                        <button type="submit" class="submit-btn">Submit Request</button>
+                        <button type="button" class="preview-btn" onclick="previewRequest()">Preview</button>
+                        <button type="button" class="clear-btn" onclick="clearForm()">Clear</button>
+                    </div>
+
+                    <!-- Loading lives here so piqi-client.js getElementById('loading') resolves -->
+                    <div id="loading">
+                        <div class="spinner"></div>
+                        Sending request…
+                    </div>
+
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label for="piqiModelMnemonic">PIQI Model Mnemonic:</label>
-                <select id="piqiModelMnemonic" required>
-                    <option value="PAT_CLINICAL_V1">PAT_CLINICAL_V1</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="evaluationRubricMnemonic">Evaluation Rubric Mnemonic:</label>
-                <select id="evaluationRubricMnemonic" required>
-                    <option value="USCDI_V3">USCDI_V3</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="dataProviderID">Data Provider ID:</label>
-                <input type="text" id="dataProviderID" required>
-            </div>
-
-            <div class="form-group">
-                <label for="dataSourceID">Data Source ID:</label>
-                <input type="text" id="dataSourceID" required>
-            </div>
-
-            <div class="button-group">
-                <button type="submit" class="submit-btn">Submit Request</button>
-                <button type="button" class="preview-btn" onclick="previewRequest()">Preview Request Body</button>
-                <button type="button" class="clear-btn" onclick="clearForm()">Clear Form</button>
-            </div>
-
-            <div class="loading" id="loading">
-                Sending request...
             </div>
         </form>
+    </div><!-- /main-content -->
 
-        <div class="preview-section" id="previewSection">
-            <div class="preview-header">Preview of Request Body (with escaped messageData):</div>
-            <div class="preview-content" id="previewContent"></div>
-        </div>
+    <!-- ── Preview section (full-width) ──────────────────────── -->
+    <div class="section-label" id="previewLabel" style="display:none">Request Preview</div>
+    <div class="preview-section" id="previewSection">
+        <div class="preview-header">Preview of Request Body (with escaped messageData):</div>
+        <div class="preview-content" id="previewContent"></div>
+    </div>
 
-        <div class="response-section" id="responseSection">
-            <div class="response-header" id="responseHeader"></div>
+    <!-- ── Response section (full-width) ─────────────────────── -->
+    <div class="response-section" id="responseSection">
+        <div id="responseHeader"></div>
+        <div class="response-body-wrap">
             <div id="formattedResponseContainer"></div>
-            <button class="toggle-raw-btn" id="toggleRawBtn" onclick="toggleRawResponse()">Show Raw JSON
-                Response</button>
+            <button class="btn btn-secondary toggle-raw-btn"
+                id="toggleRawBtn" style="margin-top:16px;"
+                onclick="toggleRawResponse()">
+                ▶ Show Raw JSON Response
+            </button>
             <div class="raw-response" id="rawResponse">
                 <h3>Raw JSON Response:</h3>
                 <div class="response-content" id="responseContent"></div>
             </div>
         </div>
-
     </div>
 
-    <script>
-        // Page-specific functions for SimplePIQIClient.html
+</div><!-- /container -->
 
-        // Generate a random session ID
-        function generateSessionID() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let sessionID = '';
-            for (let i = 0; i < 32; i++) {
-                sessionID += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return 'Session ID ' + sessionID;
-        }
-
-        function generateMessageID() {
-            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-                return window.crypto.randomUUID();
-            }
-
-            const randomPart = Math.random().toString(36).slice(2, 10);
-            return 'msg-' + Date.now() + '-' + randomPart;
-        }
-
-        // Initialize session IDs on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            const sessionID = generateSessionID();
-            document.getElementById('dataProviderID').value = sessionID;
-            document.getElementById('dataSourceID').value = sessionID;
-        });
-
-        async function convertFhirToPiqi(fhirParsedMessage) {
-            const conversionApiUrl = document.getElementById('fhirConversionApiUrl').value;
-
-            if (window.location.protocol === 'https:' && conversionApiUrl.startsWith('http://')) {
-                throw new Error('Blocked by browser security: this page is served over HTTPS and cannot call an HTTP conversion endpoint. Use an HTTPS conversion URL (for example, https://localhost:5001/convertToPiqi) and ensure CORS is enabled on the conversion API.');
-            }
-
-            const conversionRequestBody = {
-                InputDataString: JSON.stringify(fhirParsedMessage, null, 2),
-                RootTemplateName: 'BundleJSON',
-                OutputFormat: 'json',
-                IncludeTraceInfo: false,
-                CorrelationId: 'rest-client-001'
-            };
-
-            async function callConversionApi(url, method) {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(conversionRequestBody)
-                });
-
-                let data;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
-                } else {
-                    data = await response.text();
-                }
-
-                return { response, data };
-            }
-
-            const candidateUrls = conversionApiUrl.endsWith('/')
-                ? [conversionApiUrl, conversionApiUrl.slice(0, -1)]
-                : [conversionApiUrl, conversionApiUrl + '/'];
-            const candidateMethods = ['POST', 'PUT'];
-
-            let lastAttemptError = null;
-            let successfulConversionData = null;
-
-            for (const method of candidateMethods) {
-                for (const url of candidateUrls) {
-                    const attempt = await callConversionApi(url, method);
-                    if (attempt.response.ok) {
-                        successfulConversionData = attempt.data;
-                        break;
-                    }
-
-                    const errorText = typeof attempt.data === 'object'
-                        ? JSON.stringify(attempt.data)
-                        : attempt.data;
-
-                    lastAttemptError = {
-                        status: attempt.response.status,
-                        method: method,
-                        url: url,
-                        errorText: errorText
-                    };
-
-                    if (attempt.response.status !== 405) {
-                        throw new Error('FHIR conversion failed (Status: ' + attempt.response.status + ', Method: ' + method + ', URL: ' + url + '): ' + errorText);
-                    }
-                }
-
-                if (successfulConversionData !== null) {
-                    break;
-                }
-            }
-
-            if (successfulConversionData === null) {
-                throw new Error('FHIR conversion failed with 405 Method Not Allowed. Tried methods POST and PUT at ' + candidateUrls.join(' and ') + '. Last attempt was ' + lastAttemptError.method + ' ' + lastAttemptError.url + '.');
-            }
-
-            const conversionData = successfulConversionData;
-
-            if (typeof conversionData === 'string') {
-                try {
-                    return JSON.parse(conversionData);
-                } catch (parseError) {
-                    throw new Error('FHIR conversion API returned non-JSON text.');
-                }
-            }
-
-            if (conversionData && typeof conversionData === 'object') {
-                if (conversionData.Result !== undefined) {
-                    if (typeof conversionData.Result === 'string') {
-                        return JSON.parse(conversionData.Result);
-                    }
-                    return conversionData.Result;
-                }
-
-                if (conversionData.result !== undefined) {
-                    if (typeof conversionData.result === 'string') {
-                        return JSON.parse(conversionData.result);
-                    }
-                    return conversionData.result;
-                }
-
-                if (conversionData.messageData) {
-                    if (typeof conversionData.messageData === 'string') {
-                        return JSON.parse(conversionData.messageData);
-                    }
-                    return conversionData.messageData;
-                }
-
-                if (conversionData.OutputDataString && typeof conversionData.OutputDataString === 'string') {
-                    return JSON.parse(conversionData.OutputDataString);
-                }
-
-                if (conversionData.outputDataString && typeof conversionData.outputDataString === 'string') {
-                    return JSON.parse(conversionData.outputDataString);
-                }
-
-                return conversionData;
-            }
-
-            throw new Error('FHIR conversion API returned an unexpected response format.');
-        }
-
-        // Build request body using PIQI JSON directly or by converting FHIR JSON first
-        async function buildRequestBody() {
-            const messageDataStr = document.getElementById('piqiJsonInput').value;
-            const inputContentType = document.getElementById('inputContentType').value;
-
-            let parsedInput;
-            try {
-                parsedInput = JSON.parse(messageDataStr);
-            } catch (parseError) {
-                throw new Error('Invalid JSON in pasted message: ' + parseError.message);
-            }
-
-            const messageDataParsed = inputContentType === 'FHIR'
-                ? await convertFhirToPiqi(parsedInput)
-                : parsedInput;
-
-            let messageID = messageDataParsed.messageID || messageDataParsed.messageId || '';
-            if (inputContentType === 'FHIR' && !messageID) {
-                messageID = generateMessageID();
-            }
-
-            return {
-                dataProviderID: document.getElementById('dataProviderID').value,
-                dataSourceID: document.getElementById('dataSourceID').value,
-                messageID: messageID,
-                piqiModelMnemonic: document.getElementById('piqiModelMnemonic').value,
-                evaluationRubricMnemonic: document.getElementById('evaluationRubricMnemonic').value,
-                messageData: JSON.stringify(messageDataParsed)
-            };
-        }
-
-        function clearForm() {
-            if (confirm('Are you sure you want to clear the form?')) {
-                document.getElementById('apiForm').reset();
-                document.getElementById('piqiJsonInput').value = '';
-                document.getElementById('responseSection').classList.remove('show');
-                document.getElementById('previewSection').classList.remove('show');
-            }
-        }
-    </script>
-    <script src="piqi-config.js"></script>
-    <script src="piqi-client.js"></script>
-
-    <!-- Value Modal Dialog -->
-    <div id="valueModal" class="modal-overlay">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <h2 class="modal-title">Attribute Value</h2>
-                <button class="modal-close-btn" onclick="closeValueModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="json-display" id="jsonDisplay"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-copy-btn" id="modalCopyBtn" onclick="copyToClipboard()">Copy to Clipboard</button>
-                <button class="modal-close-footer-btn" onclick="closeValueModal()">Close</button>
-            </div>
+<!-- ── Sticky Action Bar ───────────────────────────────────────── -->
+<div class="action-bar" role="toolbar" aria-label="Form actions">
+    <button type="button" class="btn btn-primary" id="submitBtn"
+        onclick="document.getElementById('apiForm').requestSubmit()">
+        ▶ Submit Request
+    </button>
+    <button type="button" class="btn btn-secondary"
+        onclick="window.open('/utils/DataQualitySPA.html', '_blank')">
+        Open Data Quality SPA
+    </button>
+    <button type="button" class="btn btn-secondary"
+        onclick="previewRequest(); document.getElementById('previewLabel').style.display='block'">
+        📄 Preview Body
+    </button>
+    <button type="button" class="btn btn-ghost" onclick="clearForm()">
+        🗑 Clear
+    </button>
+    <div class="action-bar__right" id="actionBarLoading" style="display:none">
+        <div style="display:flex;align-items:center;gap:9px;color:var(--c-primary);font-size:.84rem;font-weight:600;">
+            <div class="spinner"></div> Sending…
         </div>
     </div>
-</body>
+</div>
 
+<!-- ── Value Modal ─────────────────────────────────────────────── -->
+<div id="valueModal" class="modal-overlay"
+    role="dialog" aria-modal="true" aria-labelledby="modalTitleId">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h2 class="modal-title" id="modalTitleId">Attribute Value</h2>
+            <button class="modal-close-btn" onclick="closeValueModal()"
+                aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="json-display" id="jsonDisplay"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-copy-btn" id="modalCopyBtn"
+                onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button class="modal-close-footer-btn"
+                onclick="closeValueModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Page-specific helpers ───────────────────────────────────
+
+    function generateSessionID() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let id = '';
+        for (let i = 0; i < 32; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
+        return 'Session ID ' + id;
+    }
+
+    function generateMessageID() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+        }
+        return 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function regenerateSessionIDs() {
+        const id = generateSessionID();
+        document.getElementById('dataProviderID').value = id;
+        document.getElementById('dataSourceID').value = id;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        regenerateSessionIDs();
+    });
+
+    // ── Content-type pill toggle ────────────────────────────────
+    function setContentType(type) {
+        document.getElementById('inputContentType').value = type;
+        const isPIQI = type === 'PIQI';
+        document.getElementById('togglePIQI').classList.toggle('active', isPIQI);
+        document.getElementById('toggleFHIR').classList.toggle('active', !isPIQI);
+        document.getElementById('togglePIQI').setAttribute('aria-pressed', String(isPIQI));
+        document.getElementById('toggleFHIR').setAttribute('aria-pressed', String(!isPIQI));
+        document.getElementById('fhirNotice').classList.toggle('show', !isPIQI);
+        // Show FHIR URL field when FHIR mode is active
+        if (!isPIQI && !document.getElementById('advancedBody').classList.contains('open')) {
+            toggleAdvanced();
+        }
+    }
+
+    // ── Live JSON validation feedback ───────────────────────────
+    function onJsonInput(el) {
+        const val = el.value.trim();
+        const validity = document.getElementById('jsonValidity');
+        const icon     = document.getElementById('jsonValidityIcon');
+        const text     = document.getElementById('jsonValidityText');
+        const count    = document.getElementById('jsonCharCount');
+        count.textContent = el.value.length.toLocaleString() + ' characters';
+        if (!val) {
+            el.classList.remove('json-valid', 'json-invalid');
+            validity.className = 'json-validity';
+            icon.textContent = '○'; text.textContent = 'No content';
+            updateStep(2, false);
+            return;
+        }
+        try {
+            JSON.parse(val);
+            el.classList.add('json-valid'); el.classList.remove('json-invalid');
+            validity.className = 'json-validity valid';
+            icon.textContent = '✓'; text.textContent = 'Valid JSON';
+            updateStep(2, true);
+        } catch (e) {
+            el.classList.add('json-invalid'); el.classList.remove('json-valid');
+            validity.className = 'json-validity invalid';
+            icon.textContent = '✕'; text.textContent = 'Invalid JSON — ' + e.message.split('\n')[0];
+            updateStep(2, false);
+        }
+    }
+
+    function updateStep(n, active) {
+        document.getElementById('step' + n).classList.toggle('active', active);
+    }
+
+    // ── Collapsible advanced settings ───────────────────────────
+    function toggleAdvanced() {
+        const trigger = document.getElementById('advancedTrigger');
+        const body    = document.getElementById('advancedBody');
+        const isOpen  = body.classList.toggle('open');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    // ── FHIR conversion ─────────────────────────────────────────
+    async function convertFhirToPiqi(fhirParsedMessage) {
+        const conversionApiUrl = document.getElementById('fhirConversionApiUrl').value;
+        if (window.location.protocol === 'https:' && conversionApiUrl.startsWith('http://')) {
+            throw new Error('Mixed-content blocked: the page is served over HTTPS but the FHIR Conversion URL uses HTTP. Update the URL in Advanced Settings to use HTTPS.');
+        }
+        const conversionRequestBody = {
+            InputDataString: JSON.stringify(fhirParsedMessage, null, 2),
+            RootTemplateName: 'BundleJSON',
+            OutputFormat: 'json',
+            IncludeTraceInfo: false,
+            CorrelationId: 'rest-client-001'
+        };
+        async function callConversionApi(url, method) {
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(conversionRequestBody)
+            });
+            const ct = response.headers.get('content-type');
+            const data = (ct && ct.includes('application/json')) ? await response.json() : await response.text();
+            return { response, data };
+        }
+        const candidateUrls = conversionApiUrl.endsWith('/')
+            ? [conversionApiUrl, conversionApiUrl.slice(0, -1)]
+            : [conversionApiUrl, conversionApiUrl + '/'];
+        const candidateMethods = ['POST', 'PUT'];
+        let lastAttemptError = null, successfulConversionData = null;
+        for (const method of candidateMethods) {
+            for (const url of candidateUrls) {
+                const attempt = await callConversionApi(url, method);
+                if (attempt.response.ok) { successfulConversionData = attempt.data; break; }
+                const errorText = typeof attempt.data === 'object' ? JSON.stringify(attempt.data) : attempt.data;
+                lastAttemptError = { status: attempt.response.status, method, url, errorText };
+                if (attempt.response.status !== 405) {
+                    throw new Error('FHIR conversion failed (Status: ' + attempt.response.status + ', Method: ' + method + ', URL: ' + url + '): ' + errorText);
+                }
+            }
+            if (successfulConversionData !== null) break;
+        }
+        if (successfulConversionData === null) {
+            throw new Error('FHIR conversion failed with 405 Method Not Allowed. Tried POST and PUT at ' + candidateUrls.join(' and ') + '. Last attempt: ' + lastAttemptError.method + ' ' + lastAttemptError.url);
+        }
+        const conversionData = successfulConversionData;
+        if (typeof conversionData === 'string') {
+            try { return JSON.parse(conversionData); }
+            catch { throw new Error('FHIR conversion API returned non-JSON text.'); }
+        }
+        if (conversionData && typeof conversionData === 'object') {
+            if (conversionData.Result !== undefined)
+                return typeof conversionData.Result === 'string' ? JSON.parse(conversionData.Result) : conversionData.Result;
+            if (conversionData.result !== undefined)
+                return typeof conversionData.result === 'string' ? JSON.parse(conversionData.result) : conversionData.result;
+            if (conversionData.messageData)
+                return typeof conversionData.messageData === 'string' ? JSON.parse(conversionData.messageData) : conversionData.messageData;
+            if (conversionData.OutputDataString && typeof conversionData.OutputDataString === 'string')
+                return JSON.parse(conversionData.OutputDataString);
+            if (conversionData.outputDataString && typeof conversionData.outputDataString === 'string')
+                return JSON.parse(conversionData.outputDataString);
+            return conversionData;
+        }
+        throw new Error('FHIR conversion API returned an unexpected response format.');
+    }
+
+    // ── Build request body ──────────────────────────────────────
+    async function buildRequestBody() {
+        const messageDataStr   = document.getElementById('piqiJsonInput').value;
+        const inputContentType = document.getElementById('inputContentType').value;
+        let parsedInput;
+        try { parsedInput = JSON.parse(messageDataStr); }
+        catch (parseError) { throw new Error('Invalid JSON in pasted message: ' + parseError.message); }
+        const messageDataParsed = inputContentType === 'FHIR'
+            ? await convertFhirToPiqi(parsedInput) : parsedInput;
+        let messageID = messageDataParsed.messageID || messageDataParsed.messageId || '';
+        if (inputContentType === 'FHIR' && !messageID) messageID = generateMessageID();
+        return {
+            dataProviderID:           document.getElementById('dataProviderID').value,
+            dataSourceID:             document.getElementById('dataSourceID').value,
+            messageID,
+            piqiModelMnemonic:        document.getElementById('piqiModelMnemonic').value,
+            evaluationRubricMnemonic: document.getElementById('evaluationRubricMnemonic').value,
+            messageData:              JSON.stringify(messageDataParsed)
+        };
+    }
+
+    // ── Clear form ──────────────────────────────────────────────
+    function clearForm() {
+        if (!confirm('Are you sure you want to clear the form?')) return;
+        document.getElementById('apiForm').reset();
+        const textarea = document.getElementById('piqiJsonInput');
+        textarea.value = '';
+        onJsonInput(textarea);
+        document.getElementById('responseSection').classList.remove('show');
+        document.getElementById('previewSection').classList.remove('show');
+        document.getElementById('previewLabel').style.display = 'none';
+        updateStep(2, false);
+        updateStep(3, false);
+        setContentType('PIQI');
+        regenerateSessionIDs();
+    }
+</script>
+<script src="piqi-config.js"></script>
+<script src="piqi-client.js"></script>
+<script>
+    // Mirror hidden .submit-btn disabled state → visible action bar button
+    // (piqi-client.js disables the internal .submit-btn during API calls)
+    (function () {
+        const hiddenBtn  = document.querySelector('#apiForm .submit-btn');
+        const visibleBtn = document.getElementById('submitBtn');
+        const actionSpinner = document.getElementById('actionBarLoading');
+        if (!hiddenBtn || !visibleBtn) return;
+        new MutationObserver(function () {
+            visibleBtn.disabled = hiddenBtn.disabled;
+            actionSpinner.style.display = hiddenBtn.disabled ? 'block' : 'none';
+        }).observe(hiddenBtn, { attributes: true, attributeFilter: ['disabled'] });
+    })();
+
+    // Activate step 3 when response section becomes visible
+    (function () {
+        const respSection = document.getElementById('responseSection');
+        new MutationObserver(function () {
+            if (respSection.classList.contains('show')) {
+                updateStep(3, true);
+                document.getElementById('step3').classList.add('done');
+            }
+        }).observe(respSection, { attributes: true, attributeFilter: ['class'] });
+    })();
+</script>
+
+</body>
 </html>

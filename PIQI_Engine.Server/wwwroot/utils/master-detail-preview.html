@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Batch Review Master-Detail Preview</title>
+  <style>
+    :root {
+      --bg-0: #f4f8fc;
+      --bg-1: #ffffff;
+      --bg-2: #f8fbff;
+      --ink-1: #0f172a;
+      --ink-2: #334155;
+      --ink-3: #64748b;
+      --line: #dbe7f3;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.11);
+      --pass: #10b981;
+      --fail: #ef4444;
+      --skip: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Aptos", "Segoe UI", sans-serif;
+      color: var(--ink-1);
+      background:
+        radial-gradient(circle at 92% 8%, rgba(56, 189, 248, 0.20), transparent 36%),
+        radial-gradient(circle at 4% 70%, rgba(99, 102, 241, 0.12), transparent 28%),
+        var(--bg-0);
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .wrap {
+      max-width: 1380px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 60%, #2563eb 100%);
+      color: #e2e8f0;
+      border-radius: 18px;
+      padding: 18px 20px;
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.20);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 1.18rem;
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 4px 0 0;
+      color: #cbd5e1;
+      font-size: 0.92rem;
+    }
+
+    .chip {
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 0.78rem;
+      background: rgba(255, 255, 255, 0.11);
+      color: #e2e8f0;
+    }
+
+    .panel {
+      background: var(--bg-1);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      min-height: 680px;
+    }
+
+    .messages {
+      background: linear-gradient(180deg, #f8fbff 0%, #f0f7ff 100%);
+      border-right: 1px solid var(--line);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 0;
+    }
+
+    .section-head {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid #e3edf8;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 0.94rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--ink-2);
+    }
+
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--ink-3);
+      font-size: 0.82rem;
+    }
+
+    .toolbar {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e3edf8;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid #c7d7ea;
+      border-radius: 999px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 7px 11px;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+
+    .btn.active {
+      border-color: #93c5fd;
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .msg-list {
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 9px;
+      align-content: start;
+    }
+
+    .msg-item {
+      border: 1px solid #c9d8ec;
+      border-radius: 14px;
+      background: #fff;
+      padding: 11px;
+      display: grid;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    }
+
+    .msg-item:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.13);
+      border-color: #93c5fd;
+    }
+
+    .msg-item.active {
+      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+      border-color: #60a5fa;
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+    }
+
+    .row-a {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .msg-id {
+      font-family: "Cascadia Code", "Consolas", monospace;
+      font-size: 0.82rem;
+      color: #1e293b;
+    }
+
+    .score {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #1d4ed8;
+    }
+
+    .mini {
+      color: #64748b;
+      font-size: 0.76rem;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .pill.pass { color: #065f46; background: #dcfce7; }
+    .pill.fail { color: #991b1b; background: #fee2e2; }
+    .pill.skip { color: #92400e; background: #fef3c7; }
+
+    .detail {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 0;
+    }
+
+    .detail-head {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .detail-head h3 { margin: 0; font-size: 1rem; }
+    .detail-head p { margin: 3px 0 0; color: #64748b; font-size: 0.83rem; }
+
+    .kpis {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      display: grid;
+      gap: 9px;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      background: #fcfeff;
+    }
+
+    .kpi {
+      border: 1px solid #dbe7f3;
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #fff;
+    }
+
+    .kpi .label { color: #64748b; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi .value { margin-top: 4px; font-size: 1rem; font-weight: 800; color: #0f172a; }
+
+    .table-wrap {
+      overflow: auto;
+      padding: 10px 12px 14px;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+      font-size: 0.86rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8fbff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.72rem;
+      color: #334155;
+    }
+
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f8fbff; }
+
+    .reason,
+    .value {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .drawer {
+      position: fixed;
+      right: 16px;
+      top: 16px;
+      bottom: 16px;
+      width: min(500px, calc(100vw - 32px));
+      background: #fff;
+      border: 1px solid #dbe7f3;
+      border-radius: 16px;
+      box-shadow: 0 24px 44px rgba(15, 23, 42, 0.22);
+      transform: translateX(110%);
+      transition: transform 180ms ease;
+      z-index: 20;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .drawer.show { transform: translateX(0); }
+
+    .drawer-head {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .drawer-head h4 { margin: 0; font-size: 0.95rem; }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .card h5 { margin: 0 0 8px; font-size: 0.84rem; color: #334155; }
+
+    .json {
+      margin: 0;
+      padding: 9px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.78rem;
+      max-height: 190px;
+      overflow: auto;
+    }
+
+    @media (max-width: 1060px) {
+      .layout { grid-template-columns: 1fr; }
+      .messages { max-height: 320px; border-right: none; border-bottom: 1px solid var(--line); }
+      .kpis { grid-template-columns: repeat(2, minmax(130px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <h1>Master-Detail Batch Review</h1>
+        <p>Preview mode: cleaner triage with one message selected at a time.</p>
+      </div>
+      <span class="chip">Failure-first enabled</span>
+    </section>
+
+    <section class="panel">
+      <div class="layout">
+        <aside class="messages">
+          <div class="section-head">
+            <h2>Messages</h2>
+            <p>Pick one row group to inspect its checks.</p>
+          </div>
+          <div class="toolbar">
+            <button class="btn active" data-filter="all">All</button>
+            <button class="btn" data-filter="failed">Fail + Skip</button>
+            <button class="btn" data-filter="pass">Pass only</button>
+          </div>
+          <div class="msg-list" id="msg-list"></div>
+        </aside>
+
+        <main class="detail">
+          <div class="detail-head">
+            <div>
+              <h3 id="detail-title">row-1</h3>
+              <p id="detail-sub">6 checks for Lab Results</p>
+            </div>
+            <div class="legend">
+              <span><span class="dot" style="background:#10b981"></span>Pass</span>
+              <span><span class="dot" style="background:#ef4444"></span>Fail</span>
+              <span><span class="dot" style="background:#f59e0b"></span>Skip</span>
+            </div>
+          </div>
+
+          <div class="kpis" id="kpis"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>DataClass</th>
+                  <th>AttributeName</th>
+                  <th>AttributeValue</th>
+                  <th>Assessment</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody id="detail-body"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </section>
+  </div>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div>
+        <h4 id="drawer-title">Assessment Detail</h4>
+      </div>
+      <button class="btn" id="drawer-close">Close</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <script>
+    const data = [
+      {
+        id: "row-1",
+        score: 50,
+        checks: [
+          { dataClass: "Lab Results", attributeName: "performedDateTime", attributeValue: "N/A", assessment: "performed date is valid", status: "FAILED", reason: "unpopulated" },
+          { dataClass: "Lab Results", attributeName: "resultStatus", attributeValue: "N/A", assessment: "Result status is populated", status: "FAILED", reason: "result status missing" },
+          { dataClass: "Lab Results", attributeName: "resultUnit", attributeValue: "{\"codings\":[{\"system\":\"UCUM\",\"code\":\"mg/dL\"}]}", assessment: "Result Unit is UCUM", status: "PASSED", reason: "-" },
+          { dataClass: "Lab Results", attributeName: "resultValue", attributeValue: "{\"text\":\"<0.012\",\"type\":{\"text\":\"PQ\"}}", assessment: "Lab Result is SNOMED-CT", status: "SKIPPED", reason: "value type is text" },
+          { dataClass: "Lab Results", attributeName: "specimenType", attributeValue: "N/A", assessment: "Specimen Type is SNOMED-CT", status: "SKIPPED", reason: "unpopulated" },
+          { dataClass: "Lab Results", attributeName: "test", attributeValue: "{\"codings\":[{\"system\":\"2.16.840.1.113883.6.1\",\"code\":\"1234-5\"}]}", assessment: "Lab Test is LOINC", status: "PASSED", reason: "-" }
+        ]
+      },
+      {
+        id: "row-2",
+        score: 62,
+        checks: [
+          { dataClass: "Lab Results", attributeName: "performedDateTime", attributeValue: "N/A", assessment: "performed date is valid", status: "FAILED", reason: "unpopulated" },
+          { dataClass: "Lab Results", attributeName: "resultStatus", attributeValue: "F", assessment: "Result status is populated", status: "PASSED", reason: "-" },
+          { dataClass: "Lab Results", attributeName: "resultValue", attributeValue: "50", assessment: "Lab Result is SNOMED-CT", status: "SKIPPED", reason: "value type is text" },
+          { dataClass: "Lab Results", attributeName: "test", attributeValue: "2345-7", assessment: "Lab Test is LOINC", status: "PASSED", reason: "-" }
+        ]
+      },
+      {
+        id: "row-3",
+        score: 85,
+        checks: [
+          { dataClass: "Lab Results", attributeName: "performedDateTime", attributeValue: "2026-05-01T08:00:00Z", assessment: "performed date is valid", status: "PASSED", reason: "-" },
+          { dataClass: "Lab Results", attributeName: "resultStatus", attributeValue: "final", assessment: "Result status is populated", status: "PASSED", reason: "-" },
+          { dataClass: "Lab Results", attributeName: "resultUnit", attributeValue: "mg/dL", assessment: "Result Unit is UCUM", status: "PASSED", reason: "-" },
+          { dataClass: "Lab Results", attributeName: "test", attributeValue: "718-7", assessment: "Lab Test is LOINC", status: "PASSED", reason: "-" }
+        ]
+      }
+    ];
+
+    let selectedId = data[0].id;
+    let listFilter = "all";
+
+    const listEl = document.getElementById("msg-list");
+    const detailBody = document.getElementById("detail-body");
+    const detailTitle = document.getElementById("detail-title");
+    const detailSub = document.getElementById("detail-sub");
+    const kpis = document.getElementById("kpis");
+    const drawer = document.getElementById("drawer");
+    const drawerBody = document.getElementById("drawer-body");
+    const drawerTitle = document.getElementById("drawer-title");
+
+    document.querySelectorAll("[data-filter]").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        document.querySelectorAll("[data-filter]").forEach(function(other) { other.classList.remove("active"); });
+        btn.classList.add("active");
+        listFilter = btn.getAttribute("data-filter");
+        renderList();
+        const visible = filteredMessages();
+        if (!visible.find(function(m) { return m.id === selectedId; }) && visible[0]) {
+          selectedId = visible[0].id;
+        }
+        renderDetail();
+      });
+    });
+
+    document.getElementById("drawer-close").addEventListener("click", function() {
+      drawer.classList.remove("show");
+    });
+
+    function stats(checks) {
+      return checks.reduce(function(acc, c) {
+        if (c.status === "PASSED") acc.pass += 1;
+        else if (c.status === "FAILED") acc.fail += 1;
+        else acc.skip += 1;
+        return acc;
+      }, { pass: 0, fail: 0, skip: 0 });
+    }
+
+    function filteredMessages() {
+      if (listFilter === "all") return data;
+      if (listFilter === "failed") {
+        return data.filter(function(m) {
+          return m.checks.some(function(c) { return c.status === "FAILED" || c.status === "SKIPPED"; });
+        });
+      }
+      return data.filter(function(m) {
+        return m.checks.every(function(c) { return c.status === "PASSED"; });
+      });
+    }
+
+    function renderList() {
+      const visible = filteredMessages();
+      listEl.innerHTML = visible.map(function(m) {
+        const s = stats(m.checks);
+        return "" +
+          '<article class="msg-item ' + (m.id === selectedId ? "active" : "") + '" data-id="' + m.id + '">' +
+          '  <div class="row-a"><span class="msg-id">' + m.id + '</span><span class="score">' + m.score + '%</span></div>' +
+          '  <div class="mini"><span><strong>' + m.checks.length + '</strong> checks</span><span><strong>' + s.fail + '</strong> fail</span><span><strong>' + s.skip + '</strong> skip</span></div>' +
+          '  <div><span class="pill pass">Pass ' + s.pass + '</span> <span class="pill fail">Fail ' + s.fail + '</span> <span class="pill skip">Skip ' + s.skip + '</span></div>' +
+          '</article>';
+      }).join("");
+
+      listEl.querySelectorAll(".msg-item").forEach(function(item) {
+        item.addEventListener("click", function() {
+          selectedId = item.getAttribute("data-id");
+          renderList();
+          renderDetail();
+        });
+      });
+    }
+
+    function statusPill(status) {
+      const cls = status === "PASSED" ? "pass" : (status === "FAILED" ? "fail" : "skip");
+      return '<span class="pill ' + cls + '">' + status + '</span>';
+    }
+
+    function renderDetail() {
+      const selected = data.find(function(d) { return d.id === selectedId; }) || data[0];
+      if (!selected) return;
+      const s = stats(selected.checks);
+
+      detailTitle.textContent = selected.id;
+      detailSub.textContent = selected.checks.length + " checks for Lab Results";
+
+      kpis.innerHTML = "" +
+        '<div class="kpi"><div class="label">Score</div><div class="value">' + selected.score + '%</div></div>' +
+        '<div class="kpi"><div class="label">Pass</div><div class="value" style="color:#047857">' + s.pass + '</div></div>' +
+        '<div class="kpi"><div class="label">Fail</div><div class="value" style="color:#b91c1c">' + s.fail + '</div></div>' +
+        '<div class="kpi"><div class="label">Skip</div><div class="value" style="color:#a16207">' + s.skip + '</div></div>';
+
+      detailBody.innerHTML = selected.checks.map(function(c, idx) {
+        return "" +
+          '<tr class="clickable" data-index="' + idx + '">' +
+          '  <td>' + c.dataClass + '</td>' +
+          '  <td>' + c.attributeName + '</td>' +
+          '  <td class="value" title="' + c.attributeValue.replace(/"/g, '&quot;') + '">' + c.attributeValue + '</td>' +
+          '  <td>' + c.assessment + '</td>' +
+          '  <td>' + statusPill(c.status) + '</td>' +
+          '  <td class="reason" title="' + c.reason.replace(/"/g, '&quot;') + '">' + c.reason + '</td>' +
+          '</tr>';
+      }).join("");
+
+      detailBody.querySelectorAll("tr.clickable").forEach(function(row) {
+        row.addEventListener("click", function() {
+          const idx = Number(row.getAttribute("data-index"));
+          const c = selected.checks[idx];
+          drawerTitle.textContent = selected.id + " · " + c.attributeName;
+          const formatted = (() => {
+            try {
+              return JSON.stringify(JSON.parse(c.attributeValue), null, 2);
+            } catch (e) {
+              return c.attributeValue;
+            }
+          })();
+
+          drawerBody.innerHTML = "" +
+            '<section class="card"><h5>Status</h5>' + statusPill(c.status) + '</section>' +
+            '<section class="card"><h5>Assessment</h5><div>' + c.assessment + '</div></section>' +
+            '<section class="card"><h5>Reason</h5><div>' + c.reason + '</div></section>' +
+            '<section class="card"><h5>Attribute Value</h5><pre class="json">' + formatted + '</pre></section>';
+
+          drawer.classList.add("show");
+        });
+      });
+    }
+
+    renderList();
+    renderDetail();
+  </script>
+</body>
+</html>
