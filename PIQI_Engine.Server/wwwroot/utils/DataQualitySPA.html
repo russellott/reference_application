@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIQI Data Quality Management</title>
+  <link rel="stylesheet" href="dq-spa.css?v=7">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+</head>
+<body class="layout-lock-desktop">
+  <div id="app-loader" class="app-loader" aria-live="polite">
+    <div class="loader-card">
+      <div class="loader-spinner"></div>
+      <div class="loader-title">Loading Data Quality Workspace</div>
+      <div class="loader-subtitle">Preparing navigation, charts, and scoring views</div>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <header class="top-nav">
+      <div class="brand-block">
+        <div class="brand">PIQI Gateway</div>
+        <div class="brand-subtitle">Data quality operations workspace</div>
+      </div>
+      <nav class="top-links">
+        <button type="button" data-nav="submit-message">Submit Message</button>
+        <button type="button" data-nav="dashboard">Dashboard</button>
+        <button type="button" data-nav="source-review">Source Review</button>
+      </nav>
+    </header>
+
+    <div class="shell">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="main-scroll">
+        <div id="main"></div>
+        <div id="submit-audit-container" class="audit-container" style="display:none"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast-host" class="toast-host" aria-live="polite"></div>
+  <div id="modal-root"></div>
+  <div id="panel-root"></div>
+
+  <script src="piqi-config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script type="module" src="dq-spa.js?v=7"></script>
+</body>
+</html>

@@ -81,6 +81,81 @@
                 <div class="response-content" id="responseContent"></div>
             </div>
         </div>
+
+        <!-- BATCH PROCESSING SECTION (NEW) -->
+        <div class="batch-section" id="batchSection">
+            <h2>📊 Batch Processing</h2>
+            <div class="batch-input-group">
+                <div class="form-group">
+                    <label for="batchFileInput">Upload Excel/CSV File:</label>
+                    <input type="file" id="batchFileInput" accept=".xlsx,.csv" />
+                    <div class="helper-text">Upload an Excel (.xlsx) or CSV file containing multiple lab result rows. First row should be headers.</div>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="batch-submit-btn" onclick="submitBatchForm()">Process Batch</button>
+                    <button type="button" class="clear-btn" onclick="clearBatchInput()">Clear Batch</button>
+                </div>
+                <div class="status-message" id="batchStatus"></div>
+            </div>
+
+            <!-- Batch Progress & Stats -->
+            <div class="batch-stats" id="batchStatsSection" style="display: none;">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Rows:</span>
+                        <span class="stat-value" id="totalRows">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Processed:</span>
+                        <span class="stat-value" id="processedCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Passed:</span>
+                        <span class="stat-value" id="passedCount">0</span>
+                        <span class="stat-icon">✓</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Failed:</span>
+                        <span class="stat-value" id="failedCount">0</span>
+                        <span class="stat-icon">✗</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Score:</span>
+                        <span class="stat-value" id="avgScore">N/A</span>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <progress id="batchProgressBar" max="100" value="0"></progress>
+                    <span class="progress-text" id="progressText">0%</span>
+                </div>
+            </div>
+
+            <!-- Batch Results List -->
+            <div class="batch-results" id="batchResultsContainer" style="display: none;">
+                <h3>Results</h3>
+                <div class="results-table" id="batchResultsList">
+                    <!-- Results populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Detail Modal (NEW) -->
+        <div id="batchDetailModal" class="modal-overlay" style="display: none;">
+            <div class="modal-dialog batch-detail-dialog">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="detailModalTitle">Row Details</h2>
+                    <button class="modal-close-btn" onclick="closeBatchDetailModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="batchDetailContent">
+                        <!-- Existing formatting functions output goes here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-close-footer-btn" onclick="closeBatchDetailModal()">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -208,6 +283,7 @@
         }
     </script>
     <script src="piqi-config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="piqi-client.js"></script>
 
     <!-- Value Modal Dialog -->
