@@ -1,5 +1,6 @@
-﻿using PIQI_Engine.Server.Models;
-using PIQI_Engine.Server.Services;
+﻿using PIQI.Components.SAMs;
+using PIQI.Components.Models;
+using PIQI.Components.Services;
 
 namespace PIQI_Engine.Server.Engines.SAMs
 {
@@ -7,7 +8,7 @@ namespace PIQI_Engine.Server.Engines.SAMs
     /// SAM implementation that checks if an attribute's value contains a valid date part.
     /// </summary>
     public class SAM_AttrIsDate : SAMBase
-    {
+    { 
         /// <summary>
         /// Initializes a new instance of the <see cref="SAM_AttrIsDate"/> class.
         /// </summary>
@@ -72,5 +73,15 @@ namespace PIQI_Engine.Server.Engines.SAMs
             }
             return result;
         }
+
+        /// <summary>
+        /// Gets the mnemonic code for this SAM implementation.
+        /// </summary>
+        public static string StaticMnemonic => "ATTR_ISDATE";
+        /// <summary>
+        /// Gets the mnemonic string associated with this instance.
+        /// </summary>
+        public override string Mnemonic => StaticMnemonic;
+
     }
 }

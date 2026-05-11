@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Newtonsoft.Json;
+using PIQI.Components.Models;
 using PIQI.Service.WebTesting.Rest;
-using PIQI_Engine.Server.Models;
 using System.Net;
 using System.Text.RegularExpressions;
 

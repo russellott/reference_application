@@ -1,5 +1,6 @@
-﻿using PIQI_Engine.Server.Models;
-using PIQI_Engine.Server.Services;
+﻿using PIQI.Components.SAMs;
+using PIQI.Components.Models;
+using PIQI.Components.Services;
 
 namespace PIQI_Engine.Server.Engines.SAMs
 {
@@ -8,6 +9,7 @@ namespace PIQI_Engine.Server.Engines.SAMs
     /// </summary>
     public class SAM_ConceptIsComplete : SAMBase
     {
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SAM_ConceptIsComplete"/> class.
         /// </summary>
@@ -72,5 +74,14 @@ namespace PIQI_Engine.Server.Engines.SAMs
             }
             return result;
         }
+
+        /// <summary>
+        /// Gets the mnemonic code for this SAM implementation.
+        /// </summary>
+        public static string StaticMnemonic => "CONCEPT_ISCOMPLETE";
+        /// <summary>
+        /// Gets the mnemonic string associated with this instance.
+        /// </summary>
+        public override string Mnemonic => StaticMnemonic;
     }
 }

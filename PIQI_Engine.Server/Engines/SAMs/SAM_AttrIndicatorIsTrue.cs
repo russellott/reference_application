@@ -1,6 +1,7 @@
 ﻿
-using PIQI_Engine.Server.Models;
-using PIQI_Engine.Server.Services;
+using PIQI.Components.SAMs;
+using PIQI.Components.Models;
+using PIQI.Components.Services;
 
 namespace PIQI_Engine.Server.Engines.SAMs
 {
@@ -115,5 +116,14 @@ namespace PIQI_Engine.Server.Engines.SAMs
 
             return result;
         }
+
+        /// <summary>
+        /// Gets the mnemonic code for this SAM implementation.
+        /// </summary>
+        public static string StaticMnemonic => "ATTRIBUTE_INDICATOR_IS_TRUE";
+        /// <summary>
+        /// Gets the mnemonic string associated with this instance.
+        /// </summary>
+        public override string Mnemonic => StaticMnemonic;
     }
 }

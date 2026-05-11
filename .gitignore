@@ -508,3 +508,4 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+PIQI_Engine.Server/Plugins/PIQI.CustomSAMs.dll

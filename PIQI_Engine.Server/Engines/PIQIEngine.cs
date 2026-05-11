@@ -1,7 +1,6 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using PIQI_Engine.Server.Engines.SAMs;
-using PIQI_Engine.Server.Models;
+﻿using PIQI.Components.Models;
+using PIQI.Components.SAMs;
+using PIQI.Components.Services;
 using PIQI_Engine.Server.Services;
 using System.Data;
 using System.Diagnostics;
@@ -46,6 +45,11 @@ namespace PIQI_Engine.Server.Engines
         private static object _CacheLock = new object();
 
         /// <summary>
+        /// The registry for managing SAM workers
+        /// </summary>
+        private readonly SAMWorkerRegistry _samRegistry;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="PIQIEngine"/> class.
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
@@ -53,12 +57,14 @@ namespace PIQI_Engine.Server.Engines
         /// <param name="cache">The file cache service.</param>
         /// <param name="samService">The reference data service used in the SAMs.</param>
         /// <param name="referenceDataEngine">The engine used for handling reference data.</param>
+        /// <param name="samRegistry">The registry for managing SAM workers.</param>
         public PIQIEngine(
             IConfiguration configuration,
             ILogger<PIQIEngine> logger,
             FileCacheService cache,
             SAMService samService,
-            ReferenceDataEngine referenceDataEngine
+            ReferenceDataEngine referenceDataEngine,
+            SAMWorkerRegistry samRegistry
             )
         {
             _Configuration = configuration;
@@ -66,6 +72,7 @@ namespace PIQI_Engine.Server.Engines
             _Cache = cache;
             _SAMService = samService;
             _ReferenceDataEngine = referenceDataEngine;
+            _samRegistry = samRegistry;
         }
 
         #region Main
@@ -422,10 +429,10 @@ namespace PIQI_Engine.Server.Engines
                         throw new Exception("Failed to load value data for [" + dataMnemonic + "]");
 
                     // Get the executable SAM
-                    SAMBase samWorker = message.GetSAMWorker(processingSAM.Mnemonic, _SAMService);
+                    ISAMWorker samWorker = _samRegistry.CreateWorker(processingSAM.Mnemonic, processingSAM, _SAMService);
 
-                    // If we got the default sam, log that
-                    if (samWorker.SAMObject.Mnemonic == "default")
+                    // We didn't find anything that matches the mnemonic, we get back the default sam - log a warning and continue trying to execute the SAM. 
+                    if (samWorker.Mnemonic == "default")
                         _Logger.Log(LogLevel.Warning, "SAM [" + processingSAM.Mnemonic + "] wasn't found in the cache. Executing default SAM instead.");
 
                     PIQISAMRequest? samRequest = new PIQISAMRequest();
@@ -441,7 +448,7 @@ namespace PIQI_Engine.Server.Engines
                         for (int i = 0; i < evaluationCriteriaParameters.Count; i++)
                         {
                             EvaluationCriteriaParameter ecp = evaluationCriteriaParameters[i];
-                            SAMParameter? samParameter = samWorker.SAMObject.Parameters?.Where(t => t.Mnemonic == ecp.SamParameterMnemonic).FirstOrDefault();
+                            SAMParameter? samParameter = processingSAM.Parameters?.Where(t => t.Mnemonic == ecp.SamParameterMnemonic).FirstOrDefault();
                             if (samParameter == null || samParameter.Mnemonic == null || ecp.ParameterValue == null)
                                 _Logger.Log(LogLevel.Warning, $"Invalid SAM parameter object in {evaluationResult.Criterion.Entity}: {samParameter?.Mnemonic}, {ecp.ParameterValue}");
                             else
